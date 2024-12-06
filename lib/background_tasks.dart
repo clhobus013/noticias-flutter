@@ -9,47 +9,49 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 @pragma('vm:entry-point')
-void backgroundCallback(String task) async {
+void backgroundCallback() async {
   var log = Logger();
   log.i('callbackDispatcher: INICIANDO....');
 
-  // Workmanager().executeTask((task, inputData) async {
+  Workmanager().executeTask((task, inputData) async {
+    log.i(
+        "Tarefa com atraso de 1 minuto para iniciar depois que soliciou e com recorrência (15 min): EXECUTOU");
 
-  log.i(
-      "Tarefa com atraso de 1 minuto para iniciar depois que soliciou e com recorrência (15 min): EXECUTOU");
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String> listKeywords = prefs.getStringList('keywords') ?? [];
 
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> listKeywords = prefs.getStringList('keywords') ?? [];
+      List<Article> apiArticles = [];
+      List<Article> dataArticles = [];
 
-    List<Article> apiArticles = [];
-    List<Article> dataArticles = [];
+      NotificationService().showSyncNotification();
 
-    NotificationService().showSyncNotification();
+      for (var keyword in listKeywords) {
+        apiArticles = await ApiService().getNewsApiArticles(keyword) ?? [];
 
-    for (var keyword in listKeywords) {
-      apiArticles = await ApiService().getNewsApiArticles(keyword) ?? [];
+        log.i('Api articles ${apiArticles.length}');
 
-      log.i('Api articles ${apiArticles.length}');
+        dataArticles = await ApiService().getNewsDataArticles(keyword) ?? [];
 
-      dataArticles = await ApiService().getNewsDataArticles(keyword) ?? [];
+        log.i('data articles ${dataArticles.length}');
 
-      log.i('data articles ${dataArticles.length}');
+        apiArticles = apiArticles + dataArticles;
 
-      apiArticles = apiArticles + dataArticles;
+        log.i('Api total ${apiArticles.length}');
 
-      log.i('Api total ${apiArticles.length}');
-
-      if (apiArticles.length > 0) {
-        checkNewsAndNotify(apiArticles, keyword);
+        if (apiArticles.length > 0) {
+          checkNewsAndNotify(apiArticles, keyword);
+        }
       }
-    }
 
-    log.i("Artigos obtidos: ${apiArticles.length + dataArticles.length}");
-  } catch (e) {
-    log.e('Erro ao buscar artigos: $e');
-    NotificationService().showErrorNotification();
-  }
+      log.i("Artigos obtidos: ${apiArticles.length + dataArticles.length}");
+      return Future.value(true);
+    } catch (e) {
+      log.e('Erro ao buscar artigos: $e');
+      NotificationService().showErrorNotification();
+      return Future.value(false);
+    }
+  });
 }
 
 Future<void> checkNewsAndNotify(

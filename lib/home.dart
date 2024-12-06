@@ -90,12 +90,12 @@ class _HomeState extends State<Home> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          ElevatedButton(
-              onPressed: () {
-                backgroundCallback('searchNews');
-              },
-              child: const Text("Notificar")),
-          // const Parte2ComWorkmanager(),
+          // ElevatedButton(
+          //     onPressed: () {
+          //       backgroundCallback();
+          //     },
+          //     child: const Text("Notificar")),
+          const BackgroundTasks(),
           const Text(
             "Selecione os tópicos do seu interesse:",
             textAlign: TextAlign.start,
